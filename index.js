@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Koneksi Database (Pake Env atau Default)
+// Koneksi Database
 const db = mysql.createConnection({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
@@ -28,16 +28,20 @@ db.connect((err) => {
     else console.log('✅ Terhubung ke MySQL');
 });
 
-// --- ROUTES USER (HALAMAN DEPAN) ---
+// --- ROUTES USER ---
 
 // 1. Generate API Key & Daftar User Baru
 app.post('/api/register-user', (req, res) => {
     const { nama_depan, nama_belakang, email } = req.body;
-    
-    // Generate API Key Random
     const apiKey = `sk-${crypto.randomBytes(16).toString('hex')}`;
 
-    // QUERY 1: Simpan ke tabel registered_users (Data Lengkap)
+    // --- LOGIKA BARU: Hitung Tanggal Expired (Sekarang + 30 Hari) ---
+    const now = new Date();
+    const expiredDate = new Date(now);
+    expiredDate.setDate(now.getDate() + 30); // Tambah 30 hari
+    // ----------------------------------------------------------------
+
+    // Query 1: Simpan User
     const queryUser = 'INSERT INTO registered_users (nama_depan, nama_belakang, email, api_key) VALUES (?, ?, ?, ?)';
     
     db.query(queryUser, [nama_depan, nama_belakang, email, apiKey], (err, result) => {
@@ -46,15 +50,12 @@ app.post('/api/register-user', (req, res) => {
             return res.status(500).json({ success: false, message: 'Email mungkin sudah terdaftar.' });
         }
 
-        // QUERY 2: Simpan JUGA ke tabel api_keys (Biar mirip punya temanmu)
-        const queryKey = 'INSERT INTO api_keys (api_key) VALUES (?)';
-        db.query(queryKey, [apiKey], (errKey, resultKey) => {
-            if (errKey) {
-                console.error('Gagal simpan ke tabel api_keys:', errKey);
-                // Kita tidak return error disini, karena user intinya sudah berhasil daftar
-            }
+        // Query 2: Simpan API Key + Tanggal Expired
+        const queryKey = 'INSERT INTO api_keys (api_key, expired_at) VALUES (?, ?)';
+        db.query(queryKey, [apiKey, expiredDate], (errKey, resultKey) => {
+            if (errKey) console.error('Gagal simpan api_keys:', errKey);
             
-            console.log(`✅ User ${nama_depan} berhasil daftar dengan key: ${apiKey}`);
+            console.log(`✅ User ${nama_depan} daftar. Expired: ${expiredDate}`);
             res.json({ success: true, apiKey: apiKey });
         });
     });
@@ -62,54 +63,56 @@ app.post('/api/register-user', (req, res) => {
 
 // --- ROUTES ADMIN ---
 
-// 2. Admin Register (Hash Password)
 app.post('/api/admin/register', (req, res) => {
     const { email, password } = req.body;
     const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
-
     const query = 'INSERT INTO admin_users (email, password_hash) VALUES (?, ?)';
     db.query(query, [email, hashedPassword], (err, result) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ success: false, message: 'Gagal register admin.' });
-        }
-        res.json({ success: true, message: 'Admin berhasil didaftarkan.' });
+        if (err) return res.status(500).json({ success: false });
+        res.json({ success: true });
     });
 });
 
-// 3. Admin Login (Cek Hash)
 app.post('/api/admin/login', (req, res) => {
     const { email, password } = req.body;
     const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
-
     const query = 'SELECT * FROM admin_users WHERE email = ? AND password_hash = ?';
     db.query(query, [email, hashedPassword], (err, results) => {
         if (err) throw err;
-        
-        if (results.length > 0) {
-            res.json({ success: true, message: 'Login berhasil!' });
-        } else {
-            res.status(401).json({ success: false, message: 'Email atau password salah.' });
-        }
+        if (results.length > 0) res.json({ success: true });
+        else res.status(401).json({ success: false });
     });
 });
 
-// 4. Ambil Data Dashboard
+// 4. Ambil Data Dashboard (Updated Logic)
 app.get('/api/users', (req, res) => {
-    const query = 'SELECT * FROM registered_users ORDER BY reg_date DESC';
+    // Kita perlu join tabel supaya bisa lihat tanggal expired dari tabel api_keys
+    const query = `
+        SELECT u.*, k.expired_at, k.is_active
+        FROM registered_users u
+        LEFT JOIN api_keys k ON u.api_key = k.api_key
+        ORDER BY u.reg_date DESC
+    `;
     
     db.query(query, (err, results) => {
         if (err) return res.status(500).send(err);
 
         const now = new Date();
         const usersWithStatus = results.map(user => {
-            const regDate = new Date(user.reg_date);
-            const diffTime = Math.abs(now - regDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            let status = 'Aktif';
             
+            // Cek 1: Apakah status manualnya dimatikan (is_active = 0)?
+            if (user.is_active === 0) {
+                status = 'Tidak Aktif';
+            } 
+            // Cek 2: Apakah tanggal sekarang sudah melewati tanggal expired?
+            else if (user.expired_at && now > new Date(user.expired_at)) {
+                status = 'Expired';
+            }
+
             return {
                 ...user,
-                status_key: diffDays > 30 ? 'Tidak Aktif' : 'Aktif'
+                status_key: status
             };
         });
 
@@ -117,7 +120,6 @@ app.get('/api/users', (req, res) => {
     });
 });
 
-// 5. Hapus User
 app.delete('/api/users/:id', (req, res) => {
     const userId = req.params.id;
     const query = 'DELETE FROM registered_users WHERE id = ?';
@@ -127,7 +129,6 @@ app.delete('/api/users/:id', (req, res) => {
     });
 });
 
-// Routing HTML
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/admin-login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/admin-register', (req, res) => res.sendFile(path.join(__dirname, 'public', 'register.html')));

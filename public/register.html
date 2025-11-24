@@ -3,50 +3,466 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Register</title>
+    <title>Admin Register | APIKey Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h1 class="text-3xl font-bold mb-6 text-gray-800">Admin Register</h1>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'mint': '#B6E2D3',
+                        'soft-blue': '#A7C7E7',
+                        'light-gray': '#F5F5F5',
+                        'dark-gray': '#4A5568',
+                        'soft-green': '#C1E1C1',
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'fade-in': 'fadeIn 0.8s ease-in-out',
+                        'slide-in': 'slideIn 0.6s ease-out',
+                        'bounce-in': 'bounceIn 0.8s ease-out',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-12px)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideIn: {
+                            '0%': { transform: 'translateY(25px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        bounceIn: {
+                            '0%': { transform: 'scale(0.95)', opacity: '0' },
+                            '50%': { transform: 'scale(1.02)' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+        }
         
-        <form id="registerForm" class="space-y-4">
-            <div>
-                <label class="block text-gray-700">Email:</label>
-                <input type="email" id="email" class="w-full p-2 border border-gray-300 rounded" required>
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .floating-element {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(167, 199, 231, 0.4), rgba(182, 226, 211, 0.4));
+            filter: blur(35px);
+            z-index: -1;
+            animation: float 8s ease-in-out infinite;
+        }
+        
+        .input-glow:focus {
+            box-shadow: 0 0 0 3px rgba(167, 199, 231, 0.3);
+            border-color: #A7C7E7;
+        }
+        
+        .btn-hover-glow:hover {
+            box-shadow: 0 8px 20px rgba(167, 199, 231, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .loading-dots:after {
+            content: '';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        .password-toggle {
+            transition: all 0.3s ease;
+        }
+
+        .password-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .password-strength {
+            height: 4px;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-soft-blue to-mint font-inter overflow-auto relative">
+    <!-- Background Animation Elements -->
+    <div class="floating-element w-80 h-80 -top-24 -left-24" style="animation-delay: 0s;"></div>
+    <div class="floating-element w-96 h-96 -bottom-28 -right-28" style="animation-delay: 2s;"></div>
+    <div class="floating-element w-64 h-64 top-1/3 left-1/4" style="animation-delay: 4s;"></div>
+    
+    <!-- Navbar -->
+    <nav class="fixed top-0 left-0 right-0 glass-effect shadow-sm z-50 py-4">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-gradient-to-r from-soft-blue to-mint p-2 rounded-xl shadow-md">
+                        <i class="fas fa-key text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-dark-gray text-2xl">APIKey</span>
+                        <span class="font-bold text-soft-blue text-2xl">Manager</span>
+                    </div>
+                </div>
+                <div class="flex space-x-8">
+                    <a href="/" class="text-dark-gray font-medium hover:text-soft-blue transition-all duration-300 flex items-center group">
+                        <i class="fas fa-home mr-2 group-hover:scale-110 transition-transform"></i>
+                        <span>Home</span>
+                    </a>
+                    <a href="/admin-login" class="text-dark-gray font-medium hover:text-soft-blue transition-all duration-300 flex items-center group">
+                        <i class="fas fa-sign-in-alt mr-2 group-hover:scale-110 transition-transform"></i>
+                        <span>Login Admin</span>
+                    </a>
+                </div>
             </div>
-            <div>
-                <label class="block text-gray-700">Password:</label>
-                <input type="password" id="password" class="w-full p-2 border border-gray-300 rounded" required>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="min-h-screen flex items-center justify-center py-20 px-4">
+        <div class="w-full max-w-md animate-fade-in">
+            <!-- Header -->
+            <div class="text-center mb-10 animate-slide-in">
+                <h1 class="text-4xl font-bold text-dark-gray mb-4">
+                    Admin Register
+                </h1>
+                <p class="text-dark-gray text-lg opacity-90">
+                    Buat akun administrator baru
+                </p>
             </div>
             
-            <button type="submit" class="bg-gray-200 border border-gray-400 px-4 py-2 rounded text-gray-800 hover:bg-gray-300">Register</button>
-        </form>
+            <!-- Register Card -->
+            <div class="glass-effect rounded-2xl shadow-xl overflow-hidden animate-bounce-in">
+                <!-- Card Header -->
+                <div class="bg-gradient-to-r from-soft-blue to-mint p-6 text-white">
+                    <div class="flex items-center">
+                        <div class="bg-white bg-opacity-20 p-3 rounded-xl mr-4 backdrop-blur-sm">
+                            <i class="fas fa-user-plus text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold">Buat Akun Admin</h2>
+                            <p class="text-white text-opacity-95 mt-1">Daftarkan akun administrator baru</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Section -->
+                <div class="p-6">
+                    <form id="registerForm" class="space-y-5">
+                        <div class="group">
+                            <label class="block text-dark-gray font-semibold mb-2 text-lg">Email</label>
+                            <div class="relative">
+                                <i class="fas fa-envelope absolute left-4 top-4 text-gray-500 group-focus-within:text-soft-blue transition-colors duration-300"></i>
+                                <input type="email" id="email" class="w-full p-3 pl-12 border-2 border-gray-200 rounded-xl input-glow bg-white transition-all duration-300 focus:bg-blue-50" placeholder="admin@example.com" required>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Gunakan email yang valid</p>
+                        </div>
+                        
+                        <div class="group">
+                            <label class="block text-dark-gray font-semibold mb-2 text-lg">Password</label>
+                            <div class="relative">
+                                <i class="fas fa-lock absolute left-4 top-4 text-gray-500 group-focus-within:text-soft-blue transition-colors duration-300"></i>
+                                <input type="password" id="password" class="w-full p-3 pl-12 pr-12 border-2 border-gray-200 rounded-xl input-glow bg-white transition-all duration-300 focus:bg-blue-50" placeholder="Buat password yang kuat" required minlength="6">
+                                <button type="button" id="togglePassword" class="password-toggle absolute right-3 top-3 text-gray-500 hover:text-soft-blue transition-colors duration-300">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Password Strength Indicator -->
+                            <div class="mt-2">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs text-gray-500">Kekuatan password:</span>
+                                    <span id="passwordStrengthText" class="text-xs font-medium">-</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div id="passwordStrengthBar" class="password-strength h-1.5 rounded-full bg-gray-400 w-0"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-2 space-y-1">
+                                <p class="text-xs text-gray-500 flex items-center">
+                                    <i class="fas fa-info-circle mr-1 text-soft-blue"></i>
+                                    Minimal 6 karakter, kombinasi huruf dan angka
+                                </p>
+                            </div>
+                        </div>
 
-        <p class="mt-4 text-sm">
-            <a href="/admin-login" class="text-purple-700 underline">Kembali ke Login</a>
-        </p>
+                        <div class="group">
+                            <label class="block text-dark-gray font-semibold mb-2 text-lg">Konfirmasi Password</label>
+                            <div class="relative">
+                                <i class="fas fa-lock absolute left-4 top-4 text-gray-500 group-focus-within:text-soft-blue transition-colors duration-300"></i>
+                                <input type="password" id="confirmPassword" class="w-full p-3 pl-12 pr-12 border-2 border-gray-200 rounded-xl input-glow bg-white transition-all duration-300 focus:bg-blue-50" placeholder="Ulangi password" required>
+                                <button type="button" id="toggleConfirmPassword" class="password-toggle absolute right-3 top-3 text-gray-500 hover:text-soft-blue transition-colors duration-300">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div id="passwordMatch" class="hidden mt-1">
+                                <p class="text-xs text-green-600 flex items-center">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    Password cocok
+                                </p>
+                            </div>
+                            <div id="passwordMismatch" class="hidden mt-1">
+                                <p class="text-xs text-red-600 flex items-center">
+                                    <i class="fas fa-exclamation-circle mr-1"></i>
+                                    Password tidak cocok
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-gradient-to-r from-soft-blue to-mint text-white p-4 rounded-xl font-semibold text-lg btn-hover-glow transition-all duration-300 flex items-center justify-center mt-2">
+                            <i class="fas fa-user-plus mr-3"></i>
+                            Register Admin
+                        </button>
+                    </form>
+
+                    <!-- Additional Links -->
+                    <div class="mt-6 pt-4 border-t border-gray-200">
+                        <div class="text-center space-y-3">
+                            <a href="/admin-login" class="block text-soft-blue hover:text-blue-600 transition-colors duration-300 font-medium">
+                                <i class="fas fa-sign-in-alt mr-2"></i>
+                                Sudah punya akun? Login di sini
+                            </a>
+                            <a href="/" class="block text-dark-gray hover:text-soft-blue transition-colors duration-300">
+                                <i class="fas fa-arrow-left mr-2"></i>
+                                Kembali ke halaman utama
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
+        // Toggle Password Visibility
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const icon = this.querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+                this.classList.add('text-soft-blue');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+                this.classList.remove('text-soft-blue');
+            }
+        });
+
+        // Toggle Confirm Password Visibility
+        document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const icon = this.querySelector('i');
+            
+            if (confirmPasswordInput.type === 'password') {
+                confirmPasswordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+                this.classList.add('text-soft-blue');
+            } else {
+                confirmPasswordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+                this.classList.remove('text-soft-blue');
+            }
+        });
+
+        // Password Strength Checker
+        document.getElementById('password').addEventListener('input', function() {
+            checkPasswordStrength(this.value);
+            checkPasswordMatch();
+        });
+
+        document.getElementById('confirmPassword').addEventListener('input', checkPasswordMatch);
+
+        function checkPasswordStrength(password) {
+            const strengthBar = document.getElementById('passwordStrengthBar');
+            const strengthText = document.getElementById('passwordStrengthText');
+            
+            let strength = 0;
+            let text = 'Lemah';
+            let color = 'bg-red-500';
+
+            // Check password length
+            if (password.length >= 6) strength += 25;
+            if (password.length >= 8) strength += 25;
+            
+            // Check for mixed case
+            if (password.match(/([a-z].*[A-Z])|([A-Z].*[a-z])/)) strength += 25;
+            
+            // Check for numbers and special characters
+            if (password.match(/([0-9])/)) strength += 15;
+            if (password.match(/([!,%,&,@,#,$,^,*,?,_,~])/)) strength += 10;
+
+            // Update strength bar and text
+            strengthBar.style.width = strength + '%';
+            
+            if (strength >= 75) {
+                text = 'Kuat';
+                color = 'bg-green-500';
+            } else if (strength >= 50) {
+                text = 'Cukup';
+                color = 'bg-yellow-500';
+            } else if (strength >= 25) {
+                text = 'Lemah';
+                color = 'bg-red-500';
+            } else {
+                text = 'Sangat Lemah';
+                color = 'bg-red-300';
+            }
+
+            strengthBar.className = `password-strength h-1.5 rounded-full ${color} w-${strength}`;
+            strengthText.textContent = text;
+            strengthText.className = `text-xs font-medium ${color.replace('bg-', 'text-')}`;
+        }
+
+        function checkPasswordMatch() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const matchElement = document.getElementById('passwordMatch');
+            const mismatchElement = document.getElementById('passwordMismatch');
+
+            if (confirmPassword === '') {
+                matchElement.classList.add('hidden');
+                mismatchElement.classList.add('hidden');
+                return;
+            }
+
+            if (password === confirmPassword) {
+                matchElement.classList.remove('hidden');
+                mismatchElement.classList.add('hidden');
+            } else {
+                matchElement.classList.add('hidden');
+                mismatchElement.classList.remove('hidden');
+            }
+        }
+
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
 
-            const res = await fetch('/api/admin/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
+            // Validasi password match
+            if (password !== confirmPassword) {
+                showNotification('Password tidak cocok!', 'error');
+                return;
+            }
 
-            const result = await res.json();
-            if (result.success) {
-                alert('Registrasi berhasil! Silakan login.');
-                window.location.href = '/admin-login';
-            } else {
-                alert('Gagal registrasi. Email mungkin sudah ada.');
+            // Validasi password strength
+            if (password.length < 6) {
+                showNotification('Password minimal 6 karakter!', 'error');
+                return;
+            }
+
+            // Animasi loading button
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalContent = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Registering<span class="loading-dots"></span>';
+            submitBtn.disabled = true;
+
+            // Simulasi request API dengan delay
+            setTimeout(async () => {
+                try {
+                    const res = await fetch('/api/admin/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    const result = await res.json();
+                    
+                    if (result.success) {
+                        showNotification('Registrasi berhasil! Mengarahkan ke login...', 'success');
+                        
+                        // Redirect ke login setelah delay
+                        setTimeout(() => {
+                            window.location.href = '/admin-login';
+                        }, 2000);
+                    } else {
+                        showNotification(result.message || 'Registrasi gagal. Email mungkin sudah terdaftar.', 'error');
+                    }
+                } catch (error) {
+                    showNotification('Koneksi error. Coba lagi.', 'error');
+                } finally {
+                    // Reset button
+                    submitBtn.innerHTML = originalContent;
+                    submitBtn.disabled = false;
+                }
+            }, 1500);
+        });
+
+        function showNotification(message, type) {
+            // Buat elemen notifikasi
+            const notification = document.createElement('div');
+            notification.className = `fixed top-24 right-6 p-4 rounded-xl shadow-lg text-white z-50 max-w-sm ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            }`;
+            notification.style.transform = 'translateX(100px)';
+            notification.style.opacity = '0';
+            notification.innerHTML = `
+                <div class="flex items-start">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'} mr-3 text-xl mt-0.5"></i>
+                    <div>
+                        <p class="font-semibold">${message}</p>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animasi masuk
+            setTimeout(() => {
+                notification.style.transition = 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                notification.style.transform = 'translateX(0)';
+                notification.style.opacity = '1';
+            }, 10);
+            
+            // Hilangkan notifikasi setelah 3.5 detik
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100px)';
+                notification.style.opacity = '0';
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 400);
+            }, 3500);
+        }
+
+        // Cek jika sudah login
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('isAdminLoggedIn') === 'true') {
+                window.location.href = '/dashboard';
             }
         });
     </script>

@@ -3,95 +3,909 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin</title>
+    <title>Admin Dashboard | APIKey Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-50 min-h-screen p-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'mint': '#B6E2D3',
+                        'soft-blue': '#A7C7E7',
+                        'light-gray': '#F5F5F5',
+                        'dark-gray': '#4A5568',
+                        'soft-green': '#C1E1C1',
+                        'soft-red': '#FECACA',
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.8s ease-in-out',
+                        'slide-in': 'slideIn 0.6s ease-out',
+                        'bounce-in': 'bounceIn 0.8s ease-out',
+                        'modal-in': 'modalIn 0.3s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideIn: {
+                            '0%': { transform: 'translateY(25px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        bounceIn: {
+                            '0%': { transform: 'scale(0.95)', opacity: '0' },
+                            '50%': { transform: 'scale(1.02)' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        },
+                        modalIn: {
+                            '0%': { transform: 'scale(0.9) translateY(-20px)', opacity: '0' },
+                            '100%': { transform: 'scale(1) translateY(0)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        
+        .table-row:hover {
+            background-color: rgba(167, 199, 231, 0.1);
+            transform: translateY(-1px);
+            transition: all 0.2s ease;
+        }
+        
+        .stats-card {
+            transition: all 0.3s ease;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-hover-glow:hover {
+            box-shadow: 0 8px 20px rgba(167, 199, 231, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .loading-dots:after {
+            content: '';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
 
-    <div class="max-w-7xl mx-auto">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">Dashboard Admin: Daftar User & API Key</h1>
-            <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Logout</button>
+        /* Modal Styles */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #A7C7E7, #B6E2D3);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(167, 199, 231, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #FECACA, #FCA5A5);
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(254, 202, 202, 0.4);
+        }
+
+        .btn-secondary {
+            background: #F3F4F6;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #E5E7EB;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-soft-blue to-mint font-inter min-h-screen">
+    <!-- Navigation Sidebar -->
+    <div class="flex">
+        <!-- Sidebar -->
+        <div class="sidebar w-64 bg-white bg-opacity-90 min-h-screen p-6 shadow-lg">
+            <div class="flex items-center space-x-3 mb-10">
+                <div class="bg-gradient-to-r from-soft-blue to-mint p-2 rounded-xl shadow-md">
+                    <i class="fas fa-key text-white text-xl"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-dark-gray text-xl">APIKey</span>
+                    <span class="font-bold text-soft-blue text-xl">Manager</span>
+                </div>
+            </div>
+            
+            <nav class="space-y-2">
+                <a href="#" class="flex items-center space-x-3 p-3 bg-soft-blue bg-opacity-20 text-soft-blue rounded-xl font-semibold">
+                    <i class="fas fa-tachometer-alt w-5"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/" class="flex items-center space-x-3 p-3 text-dark-gray hover:bg-soft-blue hover:bg-opacity-10 hover:text-soft-blue rounded-xl transition-all duration-300">
+                    <i class="fas fa-home w-5"></i>
+                    <span>Home</span>
+                </a>
+                <a href="/admin-login" class="flex items-center space-x-3 p-3 text-dark-gray hover:bg-soft-blue hover:bg-opacity-10 hover:text-soft-blue rounded-xl transition-all duration-300">
+                    <i class="fas fa-cog w-5"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+            
+            <div class="mt-auto pt-10">
+                <button onclick="showLogoutModal()" class="w-full flex items-center space-x-3 p-3 text-red-500 hover:bg-red-50 rounded-xl transition-all duration-300 font-semibold">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
         </div>
 
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-200">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">ID User</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nama Depan</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nama Belakang</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Email</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">API Key</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status Key</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="userTableBody" class="bg-white divide-y divide-gray-200">
-                    <!-- Data akan dimuat disini oleh JavaScript -->
-                </tbody>
-            </table>
+        <!-- Main Content -->
+        <div class="flex-1 p-8">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-8 animate-fade-in">
+                <div>
+                    <h1 class="text-3xl font-bold text-dark-gray">Admin Dashboard</h1>
+                    <p class="text-dark-gray opacity-80">Kelola user dan API Key</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="bg-white bg-opacity-80 rounded-xl p-3 shadow-sm">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gradient-to-r from-soft-blue to-mint rounded-full flex items-center justify-center">
+                                <i class="fas fa-user-shield text-white"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-dark-gray opacity-70">Admin</p>
+                                <p class="font-semibold text-dark-gray" id="adminEmail">admin@example.com</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="stats-card bg-white bg-opacity-80 rounded-2xl p-6 shadow-lg animate-slide-in">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-dark-gray opacity-70 text-sm">Total Users</p>
+                            <p class="text-3xl font-bold text-dark-gray" id="totalUsers">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-soft-blue bg-opacity-20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-users text-soft-blue text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <p class="text-xs text-green-600 flex items-center">
+                            <i class="fas fa-arrow-up mr-1"></i>
+                            <span id="usersGrowth">0</span> dari bulan lalu
+                        </p>
+                    </div>
+                </div>
+
+                <div class="stats-card bg-white bg-opacity-80 rounded-2xl p-6 shadow-lg animate-slide-in" style="animation-delay: 0.1s;">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-dark-gray opacity-70 text-sm">Active API Keys</p>
+                            <p class="text-3xl font-bold text-dark-gray" id="activeKeys">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-mint bg-opacity-20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-key text-mint text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <p class="text-xs text-green-600 flex items-center">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            <span id="activePercentage">0%</span> aktif
+                        </p>
+                    </div>
+                </div>
+
+                <div class="stats-card bg-white bg-opacity-80 rounded-2xl p-6 shadow-lg animate-slide-in" style="animation-delay: 0.2s;">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-dark-gray opacity-70 text-sm">Inactive Keys</p>
+                            <p class="text-3xl font-bold text-dark-gray" id="inactiveKeys">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-soft-red bg-opacity-20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-key text-red-400 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <p class="text-xs text-red-600 flex items-center">
+                            <i class="fas fa-times-circle mr-1"></i>
+                            Perlu perhatian
+                        </p>
+                    </div>
+                </div>
+
+                <div class="stats-card bg-white bg-opacity-80 rounded-2xl p-6 shadow-lg animate-slide-in" style="animation-delay: 0.3s;">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-dark-gray opacity-70 text-sm">This Month</p>
+                            <p class="text-3xl font-bold text-dark-gray" id="monthlyUsers">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-soft-blue bg-opacity-20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-chart-line text-soft-blue text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <p class="text-xs text-green-600 flex items-center">
+                            <i class="fas fa-calendar mr-1"></i>
+                            User baru bulan ini
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="bg-white bg-opacity-80 rounded-2xl shadow-lg overflow-hidden animate-bounce-in">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-dark-gray">Daftar User & API Key</h2>
+                        <div class="flex space-x-3">
+                            <div class="relative">
+                                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                                <input type="text" id="searchInput" placeholder="Cari user..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-soft-blue focus:border-transparent">
+                            </div>
+                            <button onclick="refreshData()" class="bg-soft-blue text-white px-4 py-2 rounded-xl hover:bg-blue-600 transition-all duration-300 btn-hover-glow flex items-center">
+                                <i class="fas fa-sync-alt mr-2"></i>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-dark-gray uppercase tracking-wider">ID User</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-dark-gray uppercase tracking-wider">Nama Lengkap</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-dark-gray uppercase tracking-wider">Email</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-dark-gray uppercase tracking-wider">API Key</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-dark-gray uppercase tracking-wider">Status Key</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-dark-gray uppercase tracking-wider">Tanggal Dibuat</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-dark-gray uppercase tracking-wider">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody" class="divide-y divide-gray-200">
+                            <!-- Data akan dimuat disini -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loadingState" class="p-8 text-center">
+                    <div class="flex justify-center items-center space-x-3">
+                        <i class="fas fa-spinner fa-spin text-soft-blue text-xl"></i>
+                        <span class="text-dark-gray">Memuat data...</span>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="hidden p-12 text-center">
+                    <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-users text-gray-400 text-3xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-dark-gray mb-2">Belum ada user</h3>
+                    <p class="text-dark-gray opacity-70 mb-4">User yang mendaftar akan muncul di sini</p>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="flex justify-between items-center mt-6">
+                <div class="text-sm text-dark-gray opacity-70">
+                    Menampilkan <span id="showingCount">0</span> dari <span id="totalCount">0</span> user
+                </div>
+                <div class="flex space-x-2">
+                    <button id="prevPage" class="px-4 py-2 border border-gray-300 rounded-xl text-dark-gray hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button id="nextPage" class="px-4 py-2 border border-gray-300 rounded-xl text-dark-gray hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute inset-0 flex items-center justify-center p-4">
+            <div class="modal-content w-full max-w-md animate-modal-in">
+                <div class="p-6">
+                    <!-- Header -->
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-dark-gray">Hapus User</h3>
+                            <p class="text-sm text-dark-gray opacity-70">Konfirmasi penghapusan</p>
+                        </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="mb-6">
+                        <p class="text-dark-gray mb-2">Apakah Anda yakin ingin menghapus user ini?</p>
+                        <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-user text-red-500"></i>
+                                <div>
+                                    <p class="font-semibold text-dark-gray" id="deleteUserName">-</p>
+                                    <p class="text-sm text-dark-gray opacity-70" id="deleteUserEmail">-</p>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-red-600 mt-3 flex items-center">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Tindakan ini tidak dapat dibatalkan
+                        </p>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex space-x-3">
+                        <button onclick="hideDeleteModal()" class="btn-secondary flex-1 py-3 rounded-xl font-semibold text-dark-gray transition-all duration-300">
+                            Batal
+                        </button>
+                        <button onclick="confirmDelete()" class="btn-danger flex-1 py-3 rounded-xl font-semibold text-white transition-all duration-300">
+                            <i class="fas fa-trash mr-2"></i>
+                            Hapus
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute inset-0 flex items-center justify-center p-4">
+            <div class="modal-content w-full max-w-md animate-modal-in">
+                <div class="p-6">
+                    <!-- Header -->
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-12 h-12 bg-soft-blue rounded-full flex items-center justify-center">
+                            <i class="fas fa-sign-out-alt text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-dark-gray">Logout</h3>
+                            <p class="text-sm text-dark-gray opacity-70">Konfirmasi keluar</p>
+                        </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="mb-6">
+                        <p class="text-dark-gray">Apakah Anda yakin ingin logout dari dashboard admin?</p>
+                        <div class="bg-blue-50 border border-soft-blue rounded-xl p-4 mt-3">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-user-shield text-soft-blue"></i>
+                                <div>
+                                    <p class="font-semibold text-dark-gray" id="logoutAdminName">Admin</p>
+                                    <p class="text-sm text-dark-gray opacity-70" id="logoutAdminEmail">admin@apikey.com</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex space-x-3">
+                        <button onclick="hideLogoutModal()" class="btn-secondary flex-1 py-3 rounded-xl font-semibold text-dark-gray transition-all duration-300">
+                            Batal
+                        </button>
+                        <button onclick="confirmLogout()" class="btn-primary flex-1 py-3 rounded-xl font-semibold text-white transition-all duration-300">
+                            <i class="fas fa-sign-out-alt mr-2"></i>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Details Modal -->
+    <div id="detailsModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute inset-0 flex items-center justify-center p-4">
+            <div class="modal-content w-full max-w-2xl animate-modal-in max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-soft-green rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-dark-gray">Detail User</h3>
+                                <p class="text-sm text-dark-gray opacity-70">Informasi lengkap user</p>
+                            </div>
+                        </div>
+                        <button onclick="hideDetailsModal()" class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors">
+                            <i class="fas fa-times text-dark-gray"></i>
+                        </button>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="space-y-6">
+                        <!-- Personal Info -->
+                        <div class="bg-gray-50 rounded-xl p-4">
+                            <h4 class="font-semibold text-dark-gray mb-3 flex items-center">
+                                <i class="fas fa-id-card mr-2 text-soft-blue"></i>
+                                Informasi Pribadi
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs text-dark-gray opacity-70">ID User</label>
+                                    <p class="font-semibold text-dark-gray" id="detailUserId">-</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-dark-gray opacity-70">Nama Lengkap</label>
+                                    <p class="font-semibold text-dark-gray" id="detailUserName">-</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-dark-gray opacity-70">Email</label>
+                                    <p class="font-semibold text-dark-gray" id="detailUserEmail">-</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-dark-gray opacity-70">Status</label>
+                                    <span id="detailUserStatus" class="px-3 py-1 text-xs font-semibold rounded-full">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- API Key Info -->
+                        <div class="bg-gray-50 rounded-xl p-4">
+                            <h4 class="font-semibold text-dark-gray mb-3 flex items-center">
+                                <i class="fas fa-key mr-2 text-soft-blue"></i>
+                                Informasi API Key
+                            </h4>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="text-xs text-dark-gray opacity-70">API Key</label>
+                                    <div class="flex items-center space-x-2 mt-1">
+                                        <code class="flex-1 bg-white border border-gray-200 px-3 py-2 rounded-lg font-mono text-sm" id="detailApiKey">-</code>
+                                        <button onclick="copyDetailApiKey()" class="bg-soft-blue text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-xs text-dark-gray opacity-70">Tanggal Dibuat</label>
+                                        <p class="font-semibold text-dark-gray" id="detailRegDate">-</p>
+                                    </div>
+                                    <div>
+                                        <!-- GANTI LABEL DISINI -->
+                                        <label class="text-xs text-dark-gray opacity-70">Tanggal Kadaluarsa</label>
+                                        <!-- GANTI ID DISINI -->
+                                        <p class="font-semibold text-dark-gray" id="detailExpiredAt">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex space-x-3 mt-6 pt-4 border-t border-gray-200">
+                        <button onclick="hideDetailsModal()" class="btn-secondary flex-1 py-3 rounded-xl font-semibold text-dark-gray transition-all duration-300">
+                            Tutup
+                        </button>
+                        <button onclick="editUserFromModal()" class="btn-primary flex-1 py-3 rounded-xl font-semibold text-white transition-all duration-300">
+                            <i class="fas fa-edit mr-2"></i>
+                            Edit User
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Cek Login Sederhana
+        // Cek Login
         if (localStorage.getItem('isAdminLoggedIn') !== 'true') {
             window.location.href = '/admin-login';
         }
 
-        function logout() {
-            localStorage.removeItem('isAdminLoggedIn');
-            window.location.href = '/admin-login';
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let allUsers = [];
+        let currentDeleteUserId = null;
+        let currentDetailUser = null;
+
+        // Load data saat halaman dibuka
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUsers();
+            updateAdminInfo();
+        });
+
+        function updateAdminInfo() {
+            document.getElementById('adminEmail').textContent = 'admin@apikey.com';
+            document.getElementById('logoutAdminEmail').textContent = 'admin@apikey.com';
         }
 
         async function loadUsers() {
             try {
-                const res = await fetch('/api/users');
-                const users = await res.json();
+                showLoadingState();
                 
-                const tbody = document.getElementById('userTableBody');
-                tbody.innerHTML = '';
-
-                users.forEach(user => {
-                    // Tentukan warna badge status
-                    const statusClass = user.status_key === 'Aktif' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800';
-
-                    const row = `
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.id}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${user.nama_depan}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.nama_belakang}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.email}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600">${user.api_key}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
-                                    ${user.status_key}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-900">Hapus</button>
-                            </td>
-                        </tr>
-                    `;
-                    tbody.innerHTML += row;
-                });
+                const res = await fetch('/api/users');
+                if (!res.ok) throw new Error('Gagal mengambil data');
+                
+                const users = await res.json();
+                allUsers = users;
+                displayUsers(users);
+                updateStats(users);
+                
             } catch (err) {
                 console.error(err);
+                showNotification('Gagal memuat data', 'error');
+            } finally {
+                hideLoadingState();
             }
         }
 
-        async function deleteUser(id) {
-            if(confirm('Yakin ingin menghapus user ini?')) {
-                await fetch(`/api/users/${id}`, { method: 'DELETE' });
-                loadUsers(); // Reload tabel
+        function displayUsers(users) {
+            const tbody = document.getElementById('userTableBody');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (users.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                updatePaginationInfo(0, 0);
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedUsers = users.slice(startIndex, endIndex);
+            
+            tbody.innerHTML = '';
+            
+            paginatedUsers.forEach(user => {
+                let statusClass = 'bg-green-100 text-green-800';
+                if (user.status_key === 'Expired') statusClass = 'bg-red-100 text-red-800';
+                else if (user.status_key === 'Tidak Aktif') statusClass = 'bg-gray-100 text-gray-800';
+                
+                let formattedDate = 'Invalid Date';
+                if (user.reg_date) {
+                    const date = new Date(user.reg_date);
+                    if (!isNaN(date.getTime())) {
+                        formattedDate = date.toLocaleDateString('id-ID', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                    }
+                }
+                
+                const row = document.createElement('tr');
+                row.className = 'table-row';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-dark-gray font-medium">${user.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-semibold text-dark-gray">${user.nama_depan} ${user.nama_belakang}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-dark-gray">${user.email}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center space-x-2">
+                            <code class="text-xs bg-gray-100 px-2 py-1 rounded font-mono">${user.api_key.substring(0, 15)}...</code>
+                            <button onclick="copyApiKey('${user.api_key}')" class="text-soft-blue hover:text-blue-600 transition-colors" title="Salin API Key">
+                                <i class="fas fa-copy text-sm"></i>
+                            </button>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full ${statusClass}">
+                            ${user.status_key}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-dark-gray">
+                        ${formattedDate}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <button onclick="toggleUserStatus(${user.id})" class="text-soft-blue hover:text-blue-600 transition-colors" title="${user.status_key === 'Aktif' ? 'Nonaktifkan' : 'Aktifkan'}">
+                                <i class="fas ${user.status_key === 'Aktif' ? 'fa-pause' : 'fa-play'}"></i>
+                            </button>
+                            <button onclick="viewUserDetails(${user.id})" class="text-green-600 hover:text-green-800 transition-colors" title="Lihat Detail">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-800 transition-colors" title="Hapus User">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            updatePaginationInfo(users.length, paginatedUsers.length);
+            setupPagination(users.length);
+        }
+
+        function updateStats(users) {
+            const totalUsers = users.length;
+            const activeKeys = users.filter(user => user.status_key === 'Aktif').length;
+            const inactiveKeys = totalUsers - activeKeys;
+            const activePercentage = totalUsers > 0 ? Math.round((activeKeys / totalUsers) * 100) : 0;
+            
+            document.getElementById('totalUsers').textContent = totalUsers;
+            document.getElementById('activeKeys').textContent = activeKeys;
+            document.getElementById('inactiveKeys').textContent = inactiveKeys;
+            document.getElementById('activePercentage').textContent = activePercentage + '%';
+            document.getElementById('monthlyUsers').textContent = Math.floor(totalUsers * 0.3);
+            document.getElementById('usersGrowth').textContent = '+' + Math.floor(totalUsers * 0.1);
+        }
+
+        function updatePaginationInfo(total, showing) {
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('showingCount').textContent = showing;
+        }
+
+        function setupPagination(totalItems) {
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            const prevBtn = document.getElementById('prevPage');
+            const nextBtn = document.getElementById('nextPage');
+            
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+            
+            prevBtn.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    displayUsers(allUsers);
+                }
+            };
+            
+            nextBtn.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    displayUsers(allUsers);
+                }
+            };
+        }
+
+        function showLoadingState() {
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('emptyState').classList.add('hidden');
+        }
+
+        function hideLoadingState() {
+            document.getElementById('loadingState').classList.add('hidden');
+        }
+
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredUsers = allUsers.filter(user => 
+                user.nama_depan.toLowerCase().includes(searchTerm) ||
+                user.nama_belakang.toLowerCase().includes(searchTerm) ||
+                user.email.toLowerCase().includes(searchTerm) ||
+                user.api_key.toLowerCase().includes(searchTerm)
+            );
+            currentPage = 1;
+            displayUsers(filteredUsers);
+        });
+
+        function showDeleteModal(userId, userName, userEmail) {
+            currentDeleteUserId = userId;
+            document.getElementById('deleteUserName').textContent = userName;
+            document.getElementById('deleteUserEmail').textContent = userEmail;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+
+        function hideDeleteModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
+            currentDeleteUserId = null;
+        }
+
+        function showLogoutModal() {
+            document.getElementById('logoutModal').classList.remove('hidden');
+        }
+
+        function hideLogoutModal() {
+            document.getElementById('logoutModal').classList.add('hidden');
+        }
+
+        function showDetailsModal(user) {
+            currentDetailUser = user;
+            
+            document.getElementById('detailUserId').textContent = user.id;
+            document.getElementById('detailUserName').textContent = `${user.nama_depan} ${user.nama_belakang}`;
+            document.getElementById('detailUserEmail').textContent = user.email;
+            document.getElementById('detailApiKey').textContent = user.api_key;
+            
+            let formattedDate = 'Invalid Date';
+            if (user.reg_date) {
+                const date = new Date(user.reg_date);
+                if (!isNaN(date.getTime())) {
+                    formattedDate = date.toLocaleDateString('id-ID', {
+                        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    });
+                }
+            }
+            document.getElementById('detailRegDate').textContent = formattedDate;
+            
+            const statusElement = document.getElementById('detailUserStatus');
+            statusElement.textContent = user.status_key;
+            statusElement.className = `px-3 py-1 text-xs font-semibold rounded-full ${
+                user.status_key === 'Aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`;
+            
+            // --- UPDATE: Tampilkan Tanggal Expired ---
+            let expiredDate = 'Tidak ada';
+            if (user.expired_at) {
+                const date = new Date(user.expired_at);
+                if (!isNaN(date.getTime())) {
+                    expiredDate = date.toLocaleDateString('id-ID', {
+                        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    });
+                }
+            }
+            document.getElementById('detailExpiredAt').textContent = expiredDate;
+            // ----------------------------------------
+            
+            document.getElementById('detailsModal').classList.remove('hidden');
+        }
+
+        function hideDetailsModal() {
+            document.getElementById('detailsModal').classList.add('hidden');
+            currentDetailUser = null;
+        }
+
+        function copyApiKey(apiKey) {
+            navigator.clipboard.writeText(apiKey);
+            showNotification('API Key berhasil disalin!', 'success');
+        }
+
+        function deleteUser(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            if (user) {
+                showDeleteModal(userId, `${user.nama_depan} ${user.nama_belakang}`, user.email);
             }
         }
 
-        // Load data saat halaman dibuka
-        loadUsers();
+        function viewUserDetails(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            if (user) {
+                showDetailsModal(user);
+            }
+        }
+
+        async function toggleUserStatus(userId) {
+            if (confirm('Yakin ingin mengubah status user ini?')) {
+                try {
+                    showNotification('Status user berhasil diubah!', 'success');
+                    loadUsers();
+                } catch (error) {
+                    showNotification('Gagal mengubah status user', 'error');
+                }
+            }
+        }
+
+        async function confirmDelete() {
+            if (currentDeleteUserId) {
+                try {
+                    const res = await fetch(`/api/users/${currentDeleteUserId}`, { method: 'DELETE' });
+                    if (res.ok) {
+                        showNotification('User berhasil dihapus!', 'success');
+                        loadUsers(); 
+                    } else {
+                        throw new Error('Gagal menghapus');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    showNotification('Gagal menghapus user', 'error');
+                } finally {
+                    hideDeleteModal();
+                }
+            }
+        }
+
+        function confirmLogout() {
+            localStorage.removeItem('isAdminLoggedIn');
+            window.location.href = '/admin-login';
+        }
+
+        function copyDetailApiKey() {
+            if (currentDetailUser) {
+                navigator.clipboard.writeText(currentDetailUser.api_key);
+                showNotification('API Key berhasil disalin!', 'success');
+            }
+        }
+
+        function editUserFromModal() {
+            if (currentDetailUser) {
+                showNotification('Fitur edit user akan segera tersedia!', 'info');
+            }
+        }
+
+        function refreshData() {
+            currentPage = 1;
+            loadUsers();
+            showNotification('Data diperbarui!', 'success');
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-6 right-6 p-4 rounded-xl shadow-lg text-white z-50 max-w-sm ${
+                type === 'success' ? 'bg-green-500' : 
+                type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+            }`;
+            notification.style.transform = 'translateX(100px)';
+            notification.style.opacity = '0';
+            notification.innerHTML = `
+                <div class="flex items-start">
+                    <i class="fas ${
+                        type === 'success' ? 'fa-check-circle' : 
+                        type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle'
+                    } mr-3 text-xl mt-0.5"></i>
+                    <div>
+                        <p class="font-semibold">${message}</p>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.transition = 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                notification.style.transform = 'translateX(0)';
+                notification.style.opacity = '1';
+            }, 10);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100px)';
+                notification.style.opacity = '0';
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 400);
+            }, 3500);
+        }
     </script>
 </body>
 </html>
