@@ -26,3 +26,6 @@ DATABASE
 3. ADMIN USER
    <img width="1113" height="619" alt="image" src="https://github.com/user-attachments/assets/0ea9d7e3-c124-4cf7-ac89-88977335337f" />
 
+POSTMAN
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/03be3e72-793f-4c90-83c0-ea1970af26d9" />
+
